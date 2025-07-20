@@ -16,7 +16,7 @@ const messagesFile = path.join(__dirname, 'messages.json');
 let messages = [];
 try {
   if (fs.existsSync(messagesFile)) {
-    const raw = fs.readFileSync(messagesFile);
+    const raw = fs.readFileSync(messagesFile, 'utf-8');
     messages = JSON.parse(raw);
   }
 } catch (err) {
@@ -33,6 +33,7 @@ io.on('connection', (socket) => {
 
   // Réception message
   socket.on('message', (data) => {
+    // Validation minimale
     if (!data.username || !data.text) {
       console.log('Message mal formé reçu:', data);
       return;
@@ -45,7 +46,9 @@ io.on('connection', (socket) => {
 
     // Sauvegarder sur disque
     fs.writeFile(messagesFile, JSON.stringify(messages, null, 2), (err) => {
-      if (err) console.error('Erreur sauvegarde messages:', err);
+      if (err) {
+        console.error('Erreur sauvegarde messages:', err);
+      }
     });
 
     // Diffuser à tous (y compris émetteur)
