@@ -1,66 +1,78 @@
 body {
   margin: 0;
   font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #8e44ad, #f368e0);
+  background: #1e1e2f;
+  color: white;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 100vh;
-  color: white;
 }
 
 .chat-container {
-  background: rgba(255, 255, 255, 0.1);
-  padding: 2rem;
+  width: 100%;
+  max-width: 500px;
+  height: 90vh;
+  background: #2a2a3d;
   border-radius: 15px;
-  width: 90%;
-  max-width: 400px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-#chat-box {
-  height: 300px;
+.messages {
+  flex: 1;
   overflow-y: auto;
-  background: rgba(0, 0, 0, 0.2);
-  margin-bottom: 1rem;
-  padding: 1rem;
-  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.message {
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem 1rem;
-  margin-bottom: 0.5rem;
-  border-radius: 10px;
+.bubble {
+  padding: 10px 15px;
+  border-radius: 20px;
+  max-width: 75%;
   word-wrap: break-word;
 }
 
-.message.self {
-  background: rgba(255, 255, 255, 0.4);
-  text-align: right;
-}
-
-#message-input {
-  width: 70%;
-  padding: 0.5rem;
-  border: none;
-  border-radius: 10px;
-  outline: none;
-}
-
-#send-btn {
-  width: 25%;
-  padding: 0.5rem;
-  margin-left: 5%;
-  border: none;
-  background: #e84393;
+.sent {
+  background: linear-gradient(145deg, #ff74c6, #b86bff);
   color: white;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background 0.3s ease;
+  align-self: flex-end;
 }
 
-#send-btn:hover {
-  background: #fd79a8;
+.received {
+  background: #3c3c50;
+  color: white;
+  align-self: flex-start;
+}
+
+form {
+  display: flex;
+  padding: 10px;
+  background: #1e1e2f;
+  border-top: 1px solid #444;
+}
+
+input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 20px;
+  border: none;
+  outline: none;
+  font-size: 16px;
+  background: #3c3c50;
+  color: white;
+}
+
+button {
+  margin-left: 10px;
+  background: #ff74c6;
+  border: none;
+  border-radius: 20px;
+  padding: 10px 20px;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
 }
