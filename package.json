@@ -1,0 +1,12 @@
+{
+  "name": "pandora-chat",
+  "version": "1.0.0",
+  "main": "api/chat.js",
+  "scripts": {
+    "dev": "vercel dev"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pandora Chat</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="chat-container">
+    <h1>Pandora 💬</h1>
+    <div id="chat-box"></div>
+    <input type="text" id="message-input" placeholder="Écris un message..." />
+    <button id="send-btn">Envoyer</button>
+  </div>
+
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+  <script>
+    const socket = io({
+      path: "/socket.io"
+    });
+
+    const input = document.getElementById("message-input");
+    const chatBox = document.getElementById("chat-box");
+    const sendBtn = document.getElementById("send-btn");
+
+    function appendMessage(msg, self = false) {
+      const div = document.createElement("div");
+      div.className = self ? "message self" : "message";
+      div.textContent = msg;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    sendBtn.onclick = () => {
+      const message = input.value.trim();
+      if (message) {
+        appendMessage(message, true);
+        socket.emit("message", message);
+        input.value = "";
+      }
+    };
+
+    socket.on("message", (msg) => {
+      appendMessage(msg, false);
+    });
+  </script>
+</body>
+</html>
