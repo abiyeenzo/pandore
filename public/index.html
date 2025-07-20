@@ -23,6 +23,9 @@
       flex: 1;
       overflow-y: auto;
       padding: 15px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .message {
@@ -104,8 +107,14 @@
       localStorage.setItem('username', username);
     }
 
+    // Stocker les IDs des messages affichés pour éviter doublons
+    const displayedMessageIds = new Set();
+
     // Ajouter message dans l’interface
-    function addMessage({ username: sender, text }) {
+    function addMessage({ id, username: sender, text }) {
+      if (displayedMessageIds.has(id)) return; // Ignore doublon
+      displayedMessageIds.add(id);
+
       const msg = document.createElement('div');
       msg.classList.add('message');
       msg.classList.add(sender === username ? 'me' : 'other');
@@ -114,21 +123,23 @@
       container.scrollTop = container.scrollHeight;
     }
 
-    // Historique
+    // Afficher l’historique à la connexion
     socket.on('messageHistory', (history) => {
       history.forEach(addMessage);
     });
 
-    // Nouveaux messages
+    // Afficher les nouveaux messages reçus
     socket.on('message', addMessage);
 
-    // Envoi
+    // Envoi du message avec un ID unique
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const text = input.value.trim();
       if (text) {
-        const data = { username, text };
+        const id = Date.now() + '-' + Math.random().toString(36).slice(2);
+        const data = { id, username, text };
         socket.emit('message', data);
+        addMessage(data); // Affiche immédiatement côté émetteur
         input.value = '';
       }
     });
