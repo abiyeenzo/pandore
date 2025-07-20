@@ -29,6 +29,9 @@ socket.on('messageHistory', (history) => {
 // 4. Nouveaux messages
 socket.on('message', (msg) => {
   addMessage(msg, msg.username === username);
+  if (msg.username !== username) {
+    notifyNewMessage(msg);
+  }
 });
 
 // 5. Envoi
@@ -40,3 +43,22 @@ form.addEventListener('submit', (e) => {
     input.value = '';
   }
 });
+
+// Icône SVG en base64 pour notification
+const svgIcon = `data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0iIzhlNDRhZCIgd2lkdGg9IjQ4IiBoZWlnaHQ9IjQ4Ij4KICA8cGF0aCBkPSJNMiAyaDIwdjE2SDZsLTQgNHoiLz4KPC9zdmc+Cg==`;
+
+// Demande la permission de notification
+if ("Notification" in window && Notification.permission !== "granted") {
+  Notification.requestPermission();
+}
+
+// Fonction pour afficher notification
+function notifyNewMessage(msg) {
+  if (Notification.permission === "granted") {
+    new Notification("Pandore", {
+      body: `${msg.username}: ${msg.text}`,
+      icon: svgIcon,
+      tag: "new-message"
+    });
+  }
+}
