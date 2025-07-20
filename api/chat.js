@@ -1,8 +1,6 @@
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
@@ -10,20 +8,10 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-const messagesFile = path.join(__dirname, 'messages.json');
-
-// Charger messages depuis fichier
+// Historique des messages en mémoire
 let messages = [];
-try {
-  if (fs.existsSync(messagesFile)) {
-    const raw = fs.readFileSync(messagesFile, 'utf-8');
-    messages = JSON.parse(raw);
-  }
-} catch (err) {
-  console.error('Erreur lecture messages.json:', err);
-}
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 io.on('connection', (socket) => {
   console.log('Nouvel utilisateur connecté:', socket.id);
@@ -33,13 +21,12 @@ io.on('connection', (socket) => {
 
   // Réception message
   socket.on('message', (data) => {
-    // Validation minimale
     if (!data.username || !data.text) {
       console.log('Message mal formé reçu:', data);
       return;
     }
 
-    // Générer un id si absent (pour compatibilité)
+    // Générer un id si absent
     if (!data.id) {
       data.id = Date.now() + '-' + Math.random().toString(36).slice(2);
     }
@@ -52,15 +39,8 @@ io.on('connection', (socket) => {
 
     console.log(`${data.username}: ${data.text}`);
 
-    // Ajouter à l'historique
+    // Ajouter à l'historique en mémoire
     messages.push(data);
-
-    // Sauvegarder sur disque (asynchrone)
-    fs.writeFile(messagesFile, JSON.stringify(messages, null, 2), (err) => {
-      if (err) {
-        console.error('Erreur sauvegarde messages:', err);
-      }
-    });
 
     // Diffuser à tous (y compris émetteur)
     io.emit('message', data);
