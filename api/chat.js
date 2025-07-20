@@ -5,26 +5,37 @@ const http = require("http");
 const app = express();
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  path: "/socket.io",
-  cors: {
-    origin: "*"
-  }
-});
+// 🔒 Pour éviter de créer plusieurs serveurs (problème courant sur Vercel)
+let io;
 
-io.on("connection", (socket) => {
-  console.log("🔗 Utilisateur connecté :", socket.id);
-
-  socket.on("message", (data) => {
-    socket.broadcast.emit("message", data);
+if (!global.io) {
+  io = new Server(server, {
+    path: "/socket.io",
+    cors: {
+      origin: "*"
+    }
   });
 
-  socket.on("disconnect", () => {
-    console.log("❌ Utilisateur déconnecté :", socket.id);
-  });
-});
+  io.on("connection", (socket) => {
+    console.log("🔗 Utilisateur connecté :", socket.id);
 
-// Trick pour Vercel Serverless
+    // Réception d’un message
+    socket.on("message", (data) => {
+      console.log("📩 Message reçu :", data);
+      socket.broadcast.emit("message", data); // Envoie au second utilisateur
+    });
+
+    socket.on("disconnect", () => {
+      console.log("❌ Utilisateur déconnecté :", socket.id);
+    });
+  });
+
+  global.io = io;
+} else {
+  io = global.io;
+}
+
+// 🔁 Trick pour supporter Vercel (serverless)
 module.exports = (req, res) => {
   if (!server.listening) {
     server.listen(0, () => {
