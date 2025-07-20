@@ -3,82 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Pandora 💬</title>
+  <title>Pandora Chat</title>
   <link rel="stylesheet" href="styles.css" />
-  <style>
-    body {
-      font-family: sans-serif;
-      background: #121212;
-      color: #f1f1f1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .chat-container {
-      width: 100%;
-      max-width: 500px;
-      background: #1e1e1e;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.5);
-    }
-    h1 {
-      text-align: center;
-    }
-    #status {
-      text-align: center;
-      margin-bottom: 10px;
-      color: #ccc;
-    }
-    #chat-box {
-      height: 300px;
-      overflow-y: auto;
-      background: #2a2a2a;
-      border-radius: 5px;
-      padding: 10px;
-      margin-bottom: 10px;
-    }
-    .message {
-      background: #3a3a3a;
-      padding: 8px 12px;
-      margin: 5px 0;
-      border-radius: 5px;
-      word-wrap: break-word;
-    }
-    .self {
-      background: #007bff;
-      color: #fff;
-      align-self: flex-end;
-    }
-    #message-input {
-      width: calc(100% - 90px);
-      padding: 10px;
-      border: none;
-      border-radius: 5px;
-      margin-right: 5px;
-    }
-    #send-btn {
-      width: 70px;
-      padding: 10px;
-      border: none;
-      background: #28a745;
-      color: white;
-      border-radius: 5px;
-      cursor: pointer;
-    }
-    #send-btn:hover {
-      background: #218838;
-    }
-  </style>
 </head>
 <body>
   <div class="chat-container">
     <h1>Pandora 💬</h1>
-    <div id="status">🔘 Chargement...</div>
     <div id="chat-box"></div>
-    <div style="display: flex;">
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
       <input type="text" id="message-input" placeholder="Écris un message..." />
       <button id="send-btn">Envoyer</button>
     </div>
@@ -93,9 +25,7 @@
     const input = document.getElementById("message-input");
     const chatBox = document.getElementById("chat-box");
     const sendBtn = document.getElementById("send-btn");
-    const statusDiv = document.getElementById("status");
 
-    // Affiche un message dans la boîte
     function appendMessage(msg, self = false) {
       const div = document.createElement("div");
       div.className = self ? "message self" : "message";
@@ -104,52 +34,23 @@
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Envoi du message
-    function sendMessage() {
+    sendBtn.onclick = () => {
       const message = input.value.trim();
       if (message) {
         appendMessage(message, true);
         socket.emit("message", message);
         input.value = "";
       }
-    }
+    };
 
-    sendBtn.onclick = sendMessage;
-    input.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") sendMessage();
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") sendBtn.click();
     });
 
-    // Nouveau message reçu
     socket.on("message", (msg) => {
       appendMessage(msg, false);
-    });
-
-    // Historique des messages
-    socket.on("history", (messages) => {
-      messages.forEach(msg => appendMessage(msg, false));
-    });
-
-    // Statut des utilisateurs
-    socket.on("status", ({ online }) => {
-      if (online > 1) {
-        statusDiv.textContent = "🟢 En ligne avec 1 autre utilisateur";
-        document.title = "Pandora 💬 (En ligne)";
-      } else {
-        statusDiv.textContent = "🔴 En attente de l'autre utilisateur...";
-        document.title = "Pandora 💬 (Seul)";
-      }
-    });
-
-    // Connexion réussie
-    socket.on("connect", () => {
-      statusDiv.textContent = "✅ Connecté au serveur.";
-    });
-
-    // Erreur de connexion
-    socket.on("connect_error", (err) => {
-      statusDiv.textContent = "⚠️ Erreur de connexion.";
-      console.error("Erreur de connexion :", err.message);
     });
   </script>
 </body>
 </html>
+
