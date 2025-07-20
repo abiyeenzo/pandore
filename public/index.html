@@ -5,19 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Pandora Chat</title>
   <link rel="stylesheet" href="styles.css" />
+  <style>
+    .message.self { text-align: right; color: #4CAF50; }
+    .message { margin: 5px 0; }
+  </style>
 </head>
 <body>
   <div class="chat-container">
     <h1>Pandora 💬</h1>
 
-    <label for="user-select">Tu es :</label>
     <select id="user-select">
+      <option value="">-- Choisis ton nom --</option>
       <option value="Enzo">Enzo</option>
       <option value="Julie">Julie</option>
     </select>
 
     <div id="chat-box"></div>
-
     <input type="text" id="message-input" placeholder="Écris un message..." />
     <button id="send-btn">Envoyer</button>
   </div>
@@ -31,32 +34,39 @@
     const sendBtn = document.getElementById("send-btn");
     const userSelect = document.getElementById("user-select");
 
-    function appendMessage(data, self = false) {
+    function appendMessage({ sender, text }, self = false) {
       const div = document.createElement("div");
       div.className = self ? "message self" : "message";
-      div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+      div.textContent = sender + ": " + text;
       chatBox.appendChild(div);
       chatBox.scrollTop = chatBox.scrollHeight;
     }
 
     sendBtn.onclick = () => {
-      const message = input.value.trim();
-      const user = userSelect.value;
+      const text = input.value.trim();
+      const sender = userSelect.value;
 
-      if (message) {
-        const data = { user, text: message };
-        appendMessage(data, true);
-        socket.emit("message", data);
+      if (!sender) {
+        alert("Tu dois d'abord choisir ton nom !");
+        return;
+      }
+
+      if (text) {
+        const msg = { sender, text };
+        appendMessage(msg, true);
+        socket.emit("message", msg);
         input.value = "";
       }
     };
 
-    socket.on("message", (data) => {
-      appendMessage(data, false);
+    // Affichage des anciens messages
+    socket.on("history", (history) => {
+      history.forEach(msg => appendMessage(msg, msg.sender === userSelect.value));
     });
 
-    socket.on("history", (history) => {
-      history.forEach(msg => appendMessage(msg, msg.user === userSelect.value));
+    // Nouveaux messages reçus
+    socket.on("message", (msg) => {
+      appendMessage(msg, false);
     });
   </script>
 </body>
