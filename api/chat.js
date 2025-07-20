@@ -1,13 +1,26 @@
 const { Server } = require("socket.io");
 const express = require("express");
 const http = require("http");
+const fs = require("fs");
+const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
+const messagesFile = path.join(__dirname, "messages.json");
 
-// Initialiser les données globales
+// Charger l'historique depuis le fichier JSON
+let messageHistory = [];
+try {
+  if (fs.existsSync(messagesFile)) {
+    const rawData = fs.readFileSync(messagesFile);
+    messageHistory = JSON.parse(rawData);
+  }
+} catch (err) {
+  console.error("Erreur lors du chargement de messages.json :", err);
+}
+
+// Initialiser Socket.io
 if (!global.io) {
-  global.messages = global.messages || [];              // [{ user: "Enzo", text: "..." }]
   global.connectedUsers = global.connectedUsers || new Set();
 
   const io = new Server(server, {
@@ -19,38 +32,46 @@ if (!global.io) {
     console.log("🔗 Utilisateur connecté :", socket.id);
     global.connectedUsers.add(socket.id);
 
-    // Envoyer l'historique
-    socket.emit("history", global.messages);
+    // Envoyer l’historique au nouveau client
+    socket.emit("history", messageHistory);
 
-    // Statut des utilisateurs
     io.emit("status", { online: global.connectedUsers.size });
 
-    // Réception message
+    // Réception d’un message avec { sender, text }
     socket.on("message", (data) => {
-      console.log(`📩 Message reçu de ${data.user} : ${data.text}`);
+      console.log("📩 Message reçu :", data);
 
-      global.messages.push(data);
+      const newMessage = {
+        sender: data.sender,
+        text: data.text,
+        timestamp: new Date().toISOString()
+      };
 
-      // Broadcast à tous sauf l’envoyeur
-      socket.broadcast.emit("message", data);
+      messageHistory.push(newMessage);
+
+      // Sauvegarde dans le fichier
+      fs.writeFile(messagesFile, JSON.stringify(messageHistory, null, 2), (err) => {
+        if (err) console.error("Erreur de sauvegarde JSON :", err);
+      });
+
+      // Diffusion à tous sauf l’expéditeur
+      socket.broadcast.emit("message", newMessage);
     });
 
     socket.on("disconnect", () => {
       global.connectedUsers.delete(socket.id);
-      console.log("❌ Déconnecté :", socket.id);
-
       io.emit("status", { online: global.connectedUsers.size });
+      console.log("❌ Utilisateur déconnecté :", socket.id);
     });
   });
 
   global.io = io;
 }
 
-// Trick Vercel
 module.exports = (req, res) => {
   if (!server.listening) {
     server.listen(0, () => {
-      console.log("✅ Serveur prêt");
+      console.log("✅ Serveur Socket.io prêt");
     });
   }
   server.emit("request", req, res);
