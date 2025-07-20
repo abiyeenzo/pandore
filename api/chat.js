@@ -8,8 +8,23 @@ const io = new Server(server, {
   cors: { origin: "*" }
 });
 
-// Historique des messages en mémoire
+// Historique des messages en mémoire (limité à 100)
 let messages = [];
+const MAX_MESSAGES = 100;
+
+// Fonction simple pour nettoyer texte (supprimer balises HTML)
+function sanitize(text) {
+  return String(text).replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// Validation simple des données
+function isValidMessage(data) {
+  if (typeof data !== 'object') return false;
+  if (typeof data.username !== 'string' || typeof data.text !== 'string') return false;
+  if (!data.username.trim() || !data.text.trim()) return false;
+  if (data.username.length > 30 || data.text.length > 500) return false; // limites arbitraires
+  return true;
+}
 
 app.use(express.static('public'));
 
@@ -19,19 +34,22 @@ io.on('connection', (socket) => {
   // Envoyer historique au nouvel utilisateur
   socket.emit('messageHistory', messages);
 
-  // Réception message
   socket.on('message', (data) => {
-    if (!data.username || !data.text) {
-      console.log('Message mal formé reçu:', data);
+    if (!isValidMessage(data)) {
+      console.log('Message mal formé ou invalide reçu:', data);
       return;
     }
 
-    // Générer un id si absent
+    // Nettoyer données
+    data.username = sanitize(data.username.trim());
+    data.text = sanitize(data.text.trim());
+
+    // Générer un ID si absent
     if (!data.id) {
       data.id = Date.now() + '-' + Math.random().toString(36).slice(2);
     }
 
-    // Vérifier doublon par ID
+    // Éviter doublons par ID
     if (messages.some(msg => msg.id === data.id)) {
       console.log('Message dupliqué ignoré:', data.id);
       return;
@@ -39,10 +57,13 @@ io.on('connection', (socket) => {
 
     console.log(`${data.username}: ${data.text}`);
 
-    // Ajouter à l'historique en mémoire
+    // Ajouter au tableau et limiter taille
     messages.push(data);
+    if (messages.length > MAX_MESSAGES) {
+      messages.shift(); // supprimer le plus ancien message
+    }
 
-    // Diffuser à tous (y compris émetteur)
+    // Diffuser à tous les clients
     io.emit('message', data);
   });
 
