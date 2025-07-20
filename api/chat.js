@@ -39,12 +39,23 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Générer un id si absent (pour compatibilité)
+    if (!data.id) {
+      data.id = Date.now() + '-' + Math.random().toString(36).slice(2);
+    }
+
+    // Vérifier doublon par ID
+    if (messages.some(msg => msg.id === data.id)) {
+      console.log('Message dupliqué ignoré:', data.id);
+      return;
+    }
+
     console.log(`${data.username}: ${data.text}`);
 
     // Ajouter à l'historique
     messages.push(data);
 
-    // Sauvegarder sur disque
+    // Sauvegarder sur disque (asynchrone)
     fs.writeFile(messagesFile, JSON.stringify(messages, null, 2), (err) => {
       if (err) {
         console.error('Erreur sauvegarde messages:', err);
